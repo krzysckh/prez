@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -std=c89 -ggdb
+CFLAGS=-Wall -Wextra -std=c99 -ggdb
 
 all: prez
 clean:
