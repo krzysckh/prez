@@ -1,21 +1,37 @@
-__________________________
-___  __ \_  ___/  _ \__  /
-__  /_/ /  /   /  __/_  /_
-_  .___//_/    \___/_____/
-/_/                       
+	__________________________
+	___  __ \_  ___/  _ \__  /
+	__  /_/ /  /   /  __/_  /_
+	_  .___//_/    \___/_____/
+	/_/                       
 
 A configurable terminal presentation tool.
 
 INSTALLATION
-------------
+============
 
 	git clone https://github.com/krzysckh/prez
 	cd prez
 	make
 	sudo make install
 
+SYNTAX
+======
+
+Use a tilde (~) and a single letter command to write text.
+After the command, use the same letter, but uppercase to end it.
+
+command		description	usage example
+------------------------------------------------------------
+p		paragraph	~pThis is a paragraph!~P
+h		header		~hThis is a header!~H
+b		bold 		~bthis text is bold!~B
+c		cursive		~cthis text is cursive~C
+i		image		~i/path/to/image.png~I
+l		link		~lhttps://website.com/~L
+
+
 CONFIGURATION
--------------
+=============
 
 ~/.config/prez/prez.cfg
 
@@ -26,7 +42,7 @@ option (tab) value
 Configuration options:
 
 option		values		description
------------------------------------------------------------
+------------------------------------------------------------
 padding		int (0-50)	set padding for text
 		(in chars)
 image_handler	/path/to/prg	set image handler
@@ -39,4 +55,5 @@ color_handler	prez |		set a color handler
 		/path/to/prg	(read HANDLERS section)
 
 HANDLERS
---------
+========
+
