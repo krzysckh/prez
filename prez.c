@@ -2,10 +2,20 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+
+typedef struct {
+	bool in_paragraph;
+	bool bold;
+	bool cursive;
+	bool header;
+	bool link;
+	bool image;
+} CharInfo;
 
 typedef struct {
 	int padding;
@@ -18,8 +28,16 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
+} Position;
+
+typedef struct {
+	int x;
+	int y;
 } winsz;
 
+/* reads configuration from conf_f
+ * will set defaults if conf_f == NULL
+ */
 Configuration read_conf(FILE *conf_f) {
 	Configuration ret;
 
@@ -98,14 +116,22 @@ Configuration read_conf(FILE *conf_f) {
 	return ret;
 }
 
+/* clears screen */
 void cls() {
 	printf("\033c");
 }
 
+/* set cursor to x, y 
+ * should be used as a helper function
+ */
 void goto_xy(int x, int y) {
 	printf("\033[%d;%dH", y, x);
 }
 
+/* gets window size
+ * should be used as a helper
+ * function
+ */
 winsz getwinsz() {
 	winsz ret;
 
@@ -137,6 +163,36 @@ int quiet_getch() {
 	return ch;
 }
 
+Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
+	Position ret = {cur_pos.x, cur_pos.y};
+
+	if (strcmp(cnf.title_handler, "prez") == 0) {
+		/* implement big text rendering */
+	} else {
+		/* implement using other programs */
+	}
+
+	return ret;
+}
+
+Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) {
+	Position ret = {cur_pos.x, cur_pos.y};
+	if (cur_pos.x > (getwinsz().x - cnf.padding)) {
+		ret.x = cnf.padding;
+		ret.y ++;
+	}
+
+	goto_xy(ret.x, ret.y);
+	ret.x ++;
+	if (cinfo.header) {
+		ret = header_write_ch(ret, cnf, ch);
+	} else {
+		fputc(ch, stdout);
+	}
+
+	return ret;
+}
+
 int main (int argc, char *argv[]) {
 	FILE *in_real,
 	     *in = tmpfile();
@@ -148,6 +204,10 @@ int main (int argc, char *argv[]) {
 	    c,
 	    i,
 	    sz;
+
+	CharInfo chr = {false, false, false, false, false, false};
+
+	Position pos = {0, 0};
 
 	while ((opt = getopt(argc, argv, "hc:")) != -1) {
 		switch (opt) {
@@ -186,8 +246,71 @@ int main (int argc, char *argv[]) {
 		text[i] = fgetc(in);
 	}
 
+	cls();
+	printf("\033[?25l"); /* hide the cursor */
+
 	Configuration conf = read_conf(fopen(cfg, "rb+"));
 
+	i = 0;
+
+	pos.x += conf.padding;
+	pos.y += conf.padding;
+	while (i < sz) {
+		if (text[i] == '~') {
+			i ++;
+			switch (text[i]) {
+				case 'p':
+					if (chr.in_paragraph) {
+						/* starting a paragraph in paragraph?
+						 * weird
+						 */
+						break;
+					}
+
+					pos.x += (conf.padding) / 2;
+					chr.in_paragraph = true;
+					
+					break;
+				case 'P':
+					if (chr.in_paragraph != true) {
+						/* something wring with syntax
+						 * ending paragraph without starting it
+						 */
+						break;
+					}
+
+					chr.in_paragraph = false;
+					pos.x = conf.padding;
+					pos.y ++;
+
+					break;
+				case 'h':
+					chr.header = true;
+					break;
+				case 'H':
+					chr.header = false;
+					break;
+				default:
+					cls();
+					printf("something is wrong with your syntax near ~%c\n", text[i]);
+					break;
+			}
+		} else if (text[i] == '\n') {
+			pos.x = conf.padding;
+			pos.y ++;
+		} else {
+			pos = write_ch(pos, conf, chr, text[i]);
+		}
+
+		i ++;
+	}
+
+	while (true) {
+		quiet_getch();
+	}
+
+
+	printf("\033[?25h");
 	free(text);
 	fclose(in);
 	fclose(in_real);

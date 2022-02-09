@@ -28,6 +28,7 @@ b		bold 		~bthis text is bold!~B
 c		cursive		~cthis text is cursive~C
 i		image		~i/path/to/image.png~I
 l		link		~lhttps://website.com/~L
+-		next slide	~-
 
 
 CONFIGURATION
