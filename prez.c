@@ -1,8 +1,11 @@
+#define _POSIX_C_SOURCE 2
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -49,7 +52,8 @@ Configuration read_conf(FILE *conf_f) {
 	char *conf_c,
 	     *conf_c_ptr,
 	     *line,
-	     *token;
+	     *token,
+	     *tmp;
 	int c,
 	    i = 0,
 	    sz,
@@ -95,14 +99,32 @@ Configuration read_conf(FILE *conf_f) {
 
 				if (strcmp(token, "padding") == 0) {
 					ret.padding = atoi(strtok(NULL, "\n"));
+				} else if (strcmp(token, "header_height") == 0) {
+					ret.header_height = atoi(strtok(NULL, "\n"));
 				} else if (strcmp(token, "image_handler") == 0) {
-					ret.image_handler = strtok(NULL, "\n");
+					ret.image_handler = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.image_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.image_handler, tmp);
 				} else if (strcmp(token, "markup_handler") == 0) {
-					ret.markup_handler = strtok(NULL, "\n");
+					ret.markup_handler = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.markup_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.markup_handler, tmp);
 				} else if (strcmp(token, "header_handler") == 0) {
-					ret.header_handler = strtok(NULL, "\n");
+					ret.header_handler = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.header_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.header_handler, tmp);
 				} else if (strcmp(token, "color_handler") == 0) {
-					ret.color_handler = strtok(NULL, "\n");
+					ret.color_handler = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.color_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.color_handler, tmp);
 				} else {
 					printf("prez: config syntax error!\n %d | %s\n\nunrecognised token %s\n",
 						curr_line_n+1, line, token);
@@ -173,6 +195,11 @@ Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
 	Position ret = {cur_pos.x, cur_pos.y};
 	int i, x = cur_pos.x, y = cur_pos.y;
 
+	if (isspace(ch)) {
+		ret.x += 8;
+		return ret;
+	}
+
 	if (strcmp(cnf.header_handler, "prez") == 0) {
 		int pos_in_chars = 0;
 		if (ch < 65) {
@@ -194,17 +221,49 @@ Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
 
 		ret.x += 8;
 	} else {
+		bool _run = true;
+		FILE *handler_f;
+		int c,
+		    max_x = x;
 		char *command = malloc(sizeof(char) * (strlen(cnf.header_handler) + 3));
-		/*                                                        ~~~ */
+		/*                                                                 ~~~ */
 		/*   strlen(" a"), where 'a' is a random letter; + space for NULL byte */
-		sprintf(command, "%s %c", cnf.header_handler, ch);
-		FILE *handler_f = popen(command, "rb+");
-		char *out;
 
+		snprintf(command, strlen(cnf.header_handler) + 3,"%s %c", cnf.header_handler, ch);
+
+		handler_f = popen(command, "r");
+
+		if (handler_f == NULL) {
+			cls();
+			goto_xy(0,0);
+			printf("Error running %s. Exiting...\n", command);
+			exit(1);
+		}
+
+		i = 0;
+		while (_run) {
+			c = fgetc(handler_f);
+			switch (c) {
+				case '\n':
+					y ++;
+					max_x = (x > max_x) ? x : max_x;
+					x = cur_pos.x;
+					break;
+				case EOF:
+					_run = false;
+					break;
+				default:
+					goto_xy(x, y);
+					fputc(c, stdout);
+					x ++;
+					break;
+			}
+		}
+
+		ret.x = max_x;
 
 		pclose(handler_f);
 		free(command);
-		free(out);
 	}
 
 	return ret;
@@ -219,10 +278,19 @@ Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) 
 
 	goto_xy(ret.x, ret.y);
 	ret.x ++;
+
+	if (cinfo.bold) {
+		printf("\033[1m");
+	}
+
 	if (cinfo.header) {
 		ret = header_write_ch(ret, cnf, ch);
 	} else {
 		fputc(ch, stdout);
+	}
+
+	if (cinfo.bold) {
+		printf("\033[22m");
 	}
 
 	return ret;
@@ -286,12 +354,12 @@ int main (int argc, char *argv[]) {
 	printf("\033[?25l"); /* hide the cursor */
 
 	Configuration conf = read_conf(fopen(cfg, "rb+"));
-
 	i = 0;
 
 	pos.x += conf.padding;
 	pos.y += conf.padding;
 	while (i < sz) {
+		fprintf(run_log, "got letter %c\n", text[i]);
 		if (text[i] == '~') {
 			i ++;
 			switch (text[i]) {
@@ -327,6 +395,12 @@ int main (int argc, char *argv[]) {
 					chr.header = false;
 					pos.y += conf.header_height;
 					break;
+				case 'b':
+					chr.bold = true;
+					break;
+				case 'B':
+					chr.bold = false;
+					break;
 				default:
 					cls();
 					printf("something is wrong with your syntax near ~%c\n", text[i]);
@@ -354,5 +428,6 @@ int main (int argc, char *argv[]) {
 	free(text);
 	fclose(in);
 	fclose(in_real);
+	fclose(run_log);
 	return 0;
 }
