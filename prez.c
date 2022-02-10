@@ -8,6 +8,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "chars.h"
+
+FILE *run_log;
+
 typedef struct {
 	bool in_paragraph;
 	bool bold;
@@ -19,9 +23,10 @@ typedef struct {
 
 typedef struct {
 	int padding;
+	int header_height;
 	char *image_handler;
 	char *markup_handler;
-	char *title_handler;
+	char *header_handler;
 	char *color_handler;
 } Configuration;
 
@@ -53,9 +58,10 @@ Configuration read_conf(FILE *conf_f) {
 	    line_len;
 
 	ret.padding = 5;
+	ret.header_height = 8;
 	ret.image_handler = NULL;
 	ret.markup_handler = "prez";
-	ret.title_handler = "prez";
+	ret.header_handler = "prez";
 	ret.color_handler = "prez";
 
 	if (conf_f != NULL) {
@@ -93,8 +99,8 @@ Configuration read_conf(FILE *conf_f) {
 					ret.image_handler = strtok(NULL, "\n");
 				} else if (strcmp(token, "markup_handler") == 0) {
 					ret.markup_handler = strtok(NULL, "\n");
-				} else if (strcmp(token, "title_handler") == 0) {
-					ret.title_handler = strtok(NULL, "\n");
+				} else if (strcmp(token, "header_handler") == 0) {
+					ret.header_handler = strtok(NULL, "\n");
 				} else if (strcmp(token, "color_handler") == 0) {
 					ret.color_handler = strtok(NULL, "\n");
 				} else {
@@ -165,11 +171,40 @@ int quiet_getch() {
 
 Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
 	Position ret = {cur_pos.x, cur_pos.y};
+	int i, x = cur_pos.x, y = cur_pos.y;
 
-	if (strcmp(cnf.title_handler, "prez") == 0) {
-		/* implement big text rendering */
+	if (strcmp(cnf.header_handler, "prez") == 0) {
+		int pos_in_chars = 0;
+		if (ch < 65) {
+			pos_in_chars = 0;
+		} else if (ch > 96 && ch < 122) {
+			pos_in_chars = ch - 65 - 32;
+		} else if (ch > 40 && ch < 91) {
+			pos_in_chars = ch - 65;
+			/* ascii(7) */
+		}
+		fprintf(run_log, "pos_in_chars = %d\n", pos_in_chars);
+
+		for (i = 0; i < 8; i++) {
+			goto_xy(cur_pos.x, y);
+			printf("%s", big_chars[pos_in_chars][i]);
+			y ++;
+		}
+
+
+		ret.x += 8;
 	} else {
-		/* implement using other programs */
+		char *command = malloc(sizeof(char) * (strlen(cnf.header_handler) + 3));
+		/*                                                        ~~~ */
+		/*   strlen(" a"), where 'a' is a random letter; + space for NULL byte */
+		sprintf(command, "%s %c", cnf.header_handler, ch);
+		FILE *handler_f = popen(command, "rb+");
+		char *out;
+
+
+		pclose(handler_f);
+		free(command);
+		free(out);
 	}
 
 	return ret;
@@ -194,6 +229,7 @@ Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) 
 }
 
 int main (int argc, char *argv[]) {
+	run_log = fopen("log", "w");
 	FILE *in_real,
 	     *in = tmpfile();
 
@@ -289,6 +325,7 @@ int main (int argc, char *argv[]) {
 					break;
 				case 'H':
 					chr.header = false;
+					pos.y += conf.header_height;
 					break;
 				default:
 					cls();
@@ -306,10 +343,13 @@ int main (int argc, char *argv[]) {
 	}
 
 	while (true) {
-		quiet_getch();
+		if (quiet_getch() == 'q') {
+			break;
+		}
 	}
 
 
+	goto_xy(0, 0);
 	printf("\033[?25h");
 	free(text);
 	fclose(in);

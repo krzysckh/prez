@@ -50,7 +50,7 @@ image_handler	/path/to/prg	set image handler
 				(read HANDLERS section)
 markup_handler	prez | markdown	set text handler
 				so prez can use other syntax
-title_handler	prez | 		set a title handler
+header_handler	prez | 		set a title handler
 		/path/to/prg	(read HANDLERS section)
 color_handler	prez |		set a color handler
 		/path/to/prg	(read HANDLERS section)
