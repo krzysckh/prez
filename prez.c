@@ -423,6 +423,7 @@ int main (int argc, char *argv[]) {
 	}
 
 
+	cls();
 	goto_xy(0, 0);
 	printf("\033[?25h");
 	free(text);
