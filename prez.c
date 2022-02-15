@@ -279,18 +279,10 @@ Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) 
 	goto_xy(ret.x, ret.y);
 	ret.x ++;
 
-	if (cinfo.bold) {
-		printf("\033[1m");
-	}
-
 	if (cinfo.header) {
 		ret = header_write_ch(ret, cnf, ch);
 	} else {
 		fputc(ch, stdout);
-	}
-
-	if (cinfo.bold) {
-		printf("\033[22m");
 	}
 
 	return ret;
@@ -307,7 +299,13 @@ int main (int argc, char *argv[]) {
 	int opt,
 	    c,
 	    i,
+	    j,
 	    sz;
+
+	bool _run = true,
+	     quit = false,
+	     _found_sld;
+
 
 	CharInfo chr = {false, false, false, false, false, false};
 
@@ -397,9 +395,65 @@ int main (int argc, char *argv[]) {
 					break;
 				case 'b':
 					chr.bold = true;
+					printf("\033[1m");
 					break;
 				case 'B':
 					chr.bold = false;
+					printf("\033[22m");
+					break;
+				case 'c':
+					chr.cursive = true;
+					printf("\033[3m");
+					break;
+				case 'C':
+					chr.cursive = false;
+					printf("\033[23m");
+					break;
+				case '-':
+					_run = true;
+					_found_sld = false;
+					while (_run) {
+						switch (quiet_getch()) {
+							case ' ':
+							case 'l':
+								pos.x = conf.padding;
+								pos.y = conf.padding;
+
+								cls();
+								_run = false;
+								break;
+							case 'h':
+								for (j = 0; j < 2; j ++) {
+									_found_sld = false;
+									i -= 2;
+									while (_found_sld == false && i >= 0) {
+										fprintf(run_log, "i = %d\n", i);
+										i --;
+										if (text[i] == '~' && text[i+1] == '-') {
+											_found_sld = true;
+										}
+									}
+								}
+
+								fprintf(run_log, "found ~-\n");
+								pos.x = conf.padding;
+								pos.y = conf.padding;
+
+								/*i ++;*/
+
+								cls();
+
+								_run = false;
+
+								break;
+							case 'q':
+								i = sz;
+								_run = false;
+								quit = true;
+
+								break;
+						}
+					}
 					break;
 				default:
 					cls();
@@ -416,7 +470,7 @@ int main (int argc, char *argv[]) {
 		i ++;
 	}
 
-	while (true) {
+	while (true && quit == false) {
 		if (quiet_getch() == 'q') {
 			break;
 		}
