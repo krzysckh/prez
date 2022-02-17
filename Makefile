@@ -1,7 +1,14 @@
-CFLAGS=-Wall -Wextra -ggdb -std=c99
+CFLAGS=-Wall -Wextra -std=c99
+PREFIX=/usr
 
-all: prez
+%.gz: %
+	gzip -k $<
+all: prez prez.1.gz
 clean:
-	rm -f prez
-test: all
-	./prez -c prez.cfg test.prez
+	rm -f prez prez.1.gz
+install: all
+	install -Dm755 -s prez -t $(PREFIX)/bin/
+	install -Dm644 prez.1.gz -t $(PREFIX)/share/man/man1/
+uninstall:
+	rm -rf $(PREFIX)/bin/prez
+	rm -rf $(PREFIX)/share/man/man1/prez.1.gz

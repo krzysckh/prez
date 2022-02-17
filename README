@@ -4,7 +4,7 @@
 	_  .___//_/    \___/_____/
 	/_/                       
 
-A configurable terminal presentation tool.
+A simple, configurable terminal presentation tool.
 
 INSTALLATION
 ============
@@ -27,7 +27,6 @@ h		header		~hThis is a header!~H
 b		bold 		~bthis text is bold!~B
 c		cursive		~cthis text is cursive~C
 i		image		~i/path/to/image.png~I
-l		link		~lhttps://website.com/~L
 -		next slide	~-
 
 
@@ -44,18 +43,85 @@ Configuration options:
 
 option		values		description
 ------------------------------------------------------------
-padding		int (0-50)	set padding for text
+padding		int 		set padding for text
 		(in chars)
 image_handler	/path/to/prg	set image handler
 				(read HANDLERS section)
-markup_handler	prez | markdown	set text handler
-				so prez can use other syntax
 header_handler	prez | 		set a title handler
 		/path/to/prg	(read HANDLERS section)
-color_handler	prez |		set a color handler
-		/path/to/prg	(read HANDLERS section)
+header_height	int		set height of a header
+		(in chars)	(read HANDLERS section)
+
 
 HANDLERS
 ========
 
+Handlers can be set in the configuration file.
 
+- image_handler sets a program to run to show an image.
+  it runs program with path to the image at the end.
+  defaults to "prez". if set as such, it will just show
+  [IMAGE: filename].
+
+  reccomended: imcat[1], img2txt[2], sxiv[3], prez_w3m_handler
+  prez_w3m_handler is an experimental handler that uses
+  w3mimgdisplay to show images in the terminal. to use it
+  copy prez_w3m_handler to somewhere in the $PATH, and set
+  image_handler to prez_w3m_handler.
+
+- header_handler sets a program to run when rendering a header.
+  it runs program with path to the image at the end.
+  defaults to "prez". if set as such, it will render a rather
+  ugly header with letters defined in chars.h
+
+  recommended: figlet[4], toilet[5], banner[6]
+
+
+EXAMPLES
+========
+
+(remove tabs)
+
+~/.config/prez/prez.cfg
+
+	padding	5
+	image_handler	imcat
+	header_handler	figlet -f speed
+
+
+example.prez 
+
+	~hUNIX systems~H
+
+	~iimage.png~I
+	~-
+	~pUnix (/ˈjuːnɪks/; trademarked as UNIX) is a family
+	of multitasking, multiuser computer operating systems 
+	that derive from the original AT&T Unix, whose 
+	development started in 1969 at the Bell Labs research 
+	center by Ken Thompson, Dennis Ritchie, and others.
+	~P
+	~-
+	~p~bSources~B~P
+
+	~p* https://wikipedia.org~P
+
+
+REFERENCES
+==========
+
+[1] - Preview any size image in a terminal window.
+      https://github.com/stolk/imcat/
+[2] - Colour ASCII Art Library.
+      https://github.com/cacalabs/libcaca
+[3] - Simple X Image Viewer.
+      https://wiki.archlinux.org/title/Sxiv
+[4] - FIGlet is a program for making large letters out of ordinary text.
+      http://www.figlet.org/
+[5] - The TOIlet project attempts to create a free replacement
+      for the FIGlet utility.
+      http://caca.zoy.org/wiki/toilet
+[6] - The banner program on Unix and Unix-like operating systems outputs
+      a large ASCII art version of the text that is supplied to
+      it as its program arguments.
+      https://en.wikipedia.org/wiki/Banner_(Unix)

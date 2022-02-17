@@ -13,8 +13,6 @@
 
 #include "chars.h"
 
-FILE *run_log;
-
 typedef struct {
 	bool in_paragraph;
 	bool bold;
@@ -28,9 +26,7 @@ typedef struct {
 	int padding;
 	int header_height;
 	char *image_handler;
-	char *markup_handler;
 	char *header_handler;
-	char *color_handler;
 } Configuration;
 
 typedef struct {
@@ -64,9 +60,7 @@ Configuration read_conf(FILE *conf_f) {
 	ret.padding = 5;
 	ret.header_height = 8;
 	ret.image_handler = NULL;
-	ret.markup_handler = "prez";
 	ret.header_handler = "prez";
-	ret.color_handler = "prez";
 
 	if (conf_f != NULL) {
 		fseek(conf_f, 0L, SEEK_END);
@@ -107,24 +101,12 @@ Configuration read_conf(FILE *conf_f) {
 					tmp = strtok(NULL, "\n");
 					ret.image_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
 					strcpy(ret.image_handler, tmp);
-				} else if (strcmp(token, "markup_handler") == 0) {
-					ret.markup_handler = NULL;
-					tmp = NULL;
-					tmp = strtok(NULL, "\n");
-					ret.markup_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
-					strcpy(ret.markup_handler, tmp);
 				} else if (strcmp(token, "header_handler") == 0) {
 					ret.header_handler = NULL;
 					tmp = NULL;
 					tmp = strtok(NULL, "\n");
 					ret.header_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
 					strcpy(ret.header_handler, tmp);
-				} else if (strcmp(token, "color_handler") == 0) {
-					ret.color_handler = NULL;
-					tmp = NULL;
-					tmp = strtok(NULL, "\n");
-					ret.color_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
-					strcpy(ret.color_handler, tmp);
 				} else {
 					printf("prez: config syntax error!\n %d | %s\n\nunrecognised token %s\n",
 						curr_line_n+1, line, token);
@@ -210,7 +192,6 @@ Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
 			pos_in_chars = ch - 65;
 			/* ascii(7) */
 		}
-		fprintf(run_log, "pos_in_chars = %d\n", pos_in_chars);
 
 		for (i = 0; i < 8; i++) {
 			goto_xy(cur_pos.x, y);
@@ -291,8 +272,7 @@ Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) 
 Position render_img(Position cur_pos, Configuration cnf, char *path) {
 	Position ret = {cur_pos.x, cur_pos.y};
 
-	int _run = true,
-	    c;
+	int c;
 	FILE *pipe;
 	char *tmp = malloc(sizeof(char) * 1024),
 	     *cmd = malloc(sizeof(char) * (strlen(path) + strlen(cnf.image_handler) + 2));
@@ -330,7 +310,6 @@ Position render_img(Position cur_pos, Configuration cnf, char *path) {
 }
 
 int main (int argc, char *argv[]) {
-	run_log = fopen("log", "w");
 	FILE *in_real,
 	     *in = tmpfile();
 
@@ -374,7 +353,8 @@ int main (int argc, char *argv[]) {
 	if (argv[optind] != NULL) {
 		in_real = fopen(argv[optind], "rb+");
 	} else {
-		in_real = stdin;
+		printf("usage: prez [-c config] file.prez\n");
+		exit(1);
 	}
 
 	while ((c = fgetc(in_real)) != EOF) {
@@ -400,7 +380,6 @@ int main (int argc, char *argv[]) {
 	pos.x += conf.padding;
 	pos.y += conf.padding;
 	while (i < sz) {
-		fprintf(run_log, "got letter %c\n", text[i]);
 		if (text[i] == '~') {
 			i ++;
 			switch (text[i]) {
@@ -425,7 +404,6 @@ int main (int argc, char *argv[]) {
 
 					pos = render_img(pos, conf, _img_fname);
 
-					fprintf(run_log, "img fname: %s\n", _img_fname);
 
 					free(_img_fname);
 					break;
@@ -495,7 +473,6 @@ int main (int argc, char *argv[]) {
 									_found_sld = false;
 									i -= 2;
 									while (_found_sld == false && i >= 0) {
-										fprintf(run_log, "i = %d\n", i);
 										i --;
 										if (text[i] == '~' && text[i+1] == '-') {
 											_found_sld = true;
@@ -503,7 +480,6 @@ int main (int argc, char *argv[]) {
 									}
 								}
 
-								fprintf(run_log, "found ~-\n");
 								pos.x = conf.padding;
 								pos.y = conf.padding;
 
@@ -551,6 +527,5 @@ int main (int argc, char *argv[]) {
 	free(text);
 	fclose(in);
 	fclose(in_real);
-	fclose(run_log);
 	return 0;
 }

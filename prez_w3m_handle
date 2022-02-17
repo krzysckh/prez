@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 #
 # render image $1 in prez
+# it renders the image in top-left of the page
+# so when using this script as a handler
+# you should write presentations with a single image on
+# a page
+# 
+# may be fixed in the future
 #
 # dependencies:
 #  w3m

@@ -1,4 +1,8 @@
 #!/bin/sh
+# 
+# script that helped with generating chars.h
+# this is why it's so ugly :)
+# just use figlet
 
 for i in A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 do

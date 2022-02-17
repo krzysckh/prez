@@ -1,0 +1,78 @@
+.TH "prez" "1"
+.SH NAME
+prez \- simple presentation tool
+.SH "SYNOPSIS"
+prez [-h] [-c config] file.prez
+.SH "USAGE"
+.PP
+Use a tilde (~) and a single letter command to write text.
+.PP
+After the command, use the same letter, but uppercase to end it.
+
+.TP
+p
+creates a paragraph
+.TP
+h
+creates a header using a 
+.B header_handler
+.TP
+b
+makes text bold
+.TP
+c
+makes text cursive
+.TP
+i
+puts an image using a 
+.B image_handler
+.TP
+-
+creates a slide
+
+.SH "OPTIONS"
+.TP
+.B \-c <filename>
+use <filename as config>
+.SH "HANDLERS"
+.PP
+You can define
+.B handlers
+to set how images and headers will be rendered.
+.PP 
+The definitions should be put to a config file.
+Keywords and values must be seperated with a tab (\\t).
+.PP
+.I ~/.config/prez/prez.cfg
+
+.EX
+header_handler	figlet -f speed
+image_handler	sxiv
+.EE
+.SH "EXAMPLE"
+.PP
+.I example.prez
+
+.EX
+~hUNIX systems~H
+
+~iimage.png~I
+~-
+~pUnix (/ˈjuːnɪks/; trademarked as UNIX) is a family
+of multitasking, multiuser computer operating systems 
+that derive from the original AT&T Unix, whose 
+development started in 1969 at the Bell Labs research 
+center by Ken Thompson, Dennis Ritchie, and others.
+~P
+~-
+~p~bSources~B~P
+
+~p* https://wikipedia.org~P
+.EE
+
+.SH "SEE ALSO"
+.IR "README from the repo"
+.UR
+https://github.com/krzysckh/prez
+.UE
+
