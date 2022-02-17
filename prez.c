@@ -288,19 +288,62 @@ Position write_ch(Position cur_pos, Configuration cnf, CharInfo cinfo, char ch) 
 	return ret;
 }
 
+Position render_img(Position cur_pos, Configuration cnf, char *path) {
+	Position ret = {cur_pos.x, cur_pos.y};
+
+	int _run = true,
+	    c;
+	FILE *pipe;
+	char *tmp = malloc(sizeof(char) * 1024),
+	     *cmd = malloc(sizeof(char) * (strlen(path) + strlen(cnf.image_handler) + 2));
+	/* 2 because space between the two args and \0 at the end */
+
+	sprintf(cmd, "%s %s", cnf.image_handler, path);
+
+	if (strcmp(cnf.image_handler, "prez") == 0) {
+		printf("[IMAGE: %s]", path);
+		ret.x = cnf.padding;
+		ret.y ++;
+	} else {
+		ret.x = cnf.padding;
+		goto_xy(ret.x, ret.y);
+		pipe = popen(cmd, "r");
+
+		while (true) {
+			c = fgetc(pipe);
+			if (c == EOF) break;
+			/* end at EOF */
+
+			fputc(c, stdout);
+			/* else, print ch */
+			ret.y = (c == '\n') ? ret.y + 1 : ret.y;
+			if (c == '\n') goto_xy(ret.x, ret.y);
+			/* add padding on newline */
+		}
+
+		pclose(pipe);
+	}
+
+	free(tmp);
+	free(cmd);
+	return ret;
+}
+
 int main (int argc, char *argv[]) {
 	run_log = fopen("log", "w");
 	FILE *in_real,
 	     *in = tmpfile();
 
 	char *cfg = NULL,
-	     *text;
+	     *text,
+	     *_img_fname;
 
 	int opt,
 	    c,
 	    i,
 	    j,
-	    sz;
+	    sz,
+	    _img_ln_len;
 
 	bool _run = true,
 	     quit = false,
@@ -361,6 +404,31 @@ int main (int argc, char *argv[]) {
 		if (text[i] == '~') {
 			i ++;
 			switch (text[i]) {
+				case 'i':
+					j = i;
+					_img_ln_len = 0;
+					_img_fname = NULL;
+
+					while (!(text[j] == '~' && text[j+1] == 'I') && (j < sz)) {
+						_img_ln_len ++;
+						j ++;
+					}
+
+					_img_fname = malloc(sizeof(char) * (_img_ln_len + 1));
+					for (j = 0; j < _img_ln_len + 1; j++) _img_fname[j] = '\0';
+
+					for (j = 0; j < _img_ln_len-1; j++) {
+						i ++;
+						_img_fname[j] = text[i];
+					}
+					i += 2;
+
+					pos = render_img(pos, conf, _img_fname);
+
+					fprintf(run_log, "img fname: %s\n", _img_fname);
+
+					free(_img_fname);
+					break;
 				case 'p':
 					if (chr.in_paragraph) {
 						/* starting a paragraph in paragraph?

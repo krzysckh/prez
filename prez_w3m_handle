@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# render image $1 in prez
+#
+# dependencies:
+#  w3m
+#  ImageMagick
+
+IFS='[;' read -p $'\e[6n' -d R -rs _ y x _
+# https://github.com/dylanaraps/pure-bash-bible#get-the-current-cursor-position
+
+w3m_img="/usr/lib/w3m/w3mimgdisplay"
+ltr_w=2
+ltr_h=4
+
+cols_av="$(($(tput cols) - x))"
+rows_av="$(($(tput lines) - y))"
+
+
+x_sz="$(convert $1 -format '%[w]' info:)"
+y_sz="$(convert $1 -format '%[h]' info:)"
+
+while [ $((x_sz / ltr_w)) -gt "$cols_av" ]
+do
+	x_sz=$((x_sz/2))
+	echo "too lil space: $x_sz"
+done
+
+echo 
+
+echo -e "0;1;$x;$y;$_xsz;$y_sz;;;;;$1\n4;\n3;" | "$w3m_img" &
+
