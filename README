@@ -59,22 +59,22 @@ HANDLERS
 Handlers can be set in the configuration file.
 
 - image_handler sets a program to run to show an image.
-  it runs program with path to the image at the end.
-  defaults to "prez". if set as such, it will just show
+  It runs program with path to the image at the end.
+  Defaults to "prez". If set as such, it will just show
   [IMAGE: filename].
 
-  reccomended: imcat[1], img2txt[2], sxiv[3], prez_w3m_handler
+  Recommended: imcat[1], img2txt[2], sxiv[3], prez_w3m_handler
   prez_w3m_handler is an experimental handler that uses
   w3mimgdisplay to show images in the terminal. to use it
   copy prez_w3m_handler to somewhere in the $PATH, and set
   image_handler to prez_w3m_handler.
 
 - header_handler sets a program to run when rendering a header.
-  it runs program with path to the image at the end.
-  defaults to "prez". if set as such, it will render a rather
+  It runs program with path to the image at the end.
+  Defaults to "prez". If set as such, it will render a rather
   ugly header with letters defined in chars.h
 
-  recommended: figlet[4], toilet[5], banner[6]
+  Recommended: figlet[4], toilet[5], banner[6]
 
 
 EXAMPLES
