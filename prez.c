@@ -188,7 +188,7 @@ Position header_write_ch(Position cur_pos, Configuration cnf, char ch) {
 			pos_in_chars = 0;
 		} else if (ch > 96 && ch < 122) {
 			pos_in_chars = ch - 65 - 32;
-		} else if (ch > 40 && ch < 91) {
+		} else if (ch > 64 && ch < 91) {
 			pos_in_chars = ch - 65;
 			/* ascii(7) */
 		}
