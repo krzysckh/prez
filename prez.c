@@ -337,6 +337,7 @@ int main (int argc, char *argv[]) {
 		switch (opt) {
 			case 'h':
 				printf("usage: prez [-c config] file.prez\n");
+				exit(0);
 				break;
 			case 'c':
 				cfg = optarg;
