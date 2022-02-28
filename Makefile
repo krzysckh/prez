@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Wextra -std=c99
+CFLAGS=-Wall -Wextra -std=c99 -ggdb
 PREFIX=/usr
 
 %.gz: %

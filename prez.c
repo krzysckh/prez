@@ -25,8 +25,11 @@ typedef struct {
 typedef struct {
 	int padding;
 	int header_height;
+	int code_tabsz;
 	char *image_handler;
 	char *header_handler;
+	char *code_handler;
+	char *code_tmp_fname;
 } Configuration;
 
 typedef struct {
@@ -59,8 +62,11 @@ Configuration read_conf(FILE *conf_f) {
 
 	ret.padding = 5;
 	ret.header_height = 8;
+	ret.code_tabsz = 8;
 	ret.image_handler = NULL;
 	ret.header_handler = "prez";
+	ret.code_handler = "prez";
+	ret.code_tmp_fname = "/tmp/_prez_code";
 
 	if (conf_f != NULL) {
 		fseek(conf_f, 0L, SEEK_END);
@@ -95,6 +101,8 @@ Configuration read_conf(FILE *conf_f) {
 					ret.padding = atoi(strtok(NULL, "\n"));
 				} else if (strcmp(token, "header_height") == 0) {
 					ret.header_height = atoi(strtok(NULL, "\n"));
+				} else if (strcmp(token, "code_tabsz") == 0) {
+					ret.code_tabsz = atoi(strtok(NULL, "\n"));
 				} else if (strcmp(token, "image_handler") == 0) {
 					ret.image_handler = NULL;
 					tmp = NULL;
@@ -107,6 +115,18 @@ Configuration read_conf(FILE *conf_f) {
 					tmp = strtok(NULL, "\n");
 					ret.header_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
 					strcpy(ret.header_handler, tmp);
+				} else if (strcmp(token, "code_handler") == 0) {
+					ret.code_handler = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.code_handler = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.code_handler, tmp);
+				} else if (strcmp(token, "code_tmp_fname") == 0) {
+					ret.code_tmp_fname = NULL;
+					tmp = NULL;
+					tmp = strtok(NULL, "\n");
+					ret.code_tmp_fname = malloc(sizeof(char) * (strlen(tmp) + 1));
+					strcpy(ret.code_tmp_fname , tmp);
 				} else {
 					printf("prez: config syntax error!\n %d | %s\n\nunrecognised token %s\n",
 						curr_line_n+1, line, token);
@@ -274,8 +294,7 @@ Position render_img(Position cur_pos, Configuration cnf, char *path) {
 
 	int c;
 	FILE *pipe;
-	char *tmp = malloc(sizeof(char) * 1024),
-	     *cmd = malloc(sizeof(char) * (strlen(path) + strlen(cnf.image_handler) + 2));
+	char *cmd = malloc(sizeof(char) * (strlen(path) + strlen(cnf.image_handler) + 2));
 	/* 2 because space between the two args and \0 at the end */
 
 	sprintf(cmd, "%s %s", cnf.image_handler, path);
@@ -304,14 +323,68 @@ Position render_img(Position cur_pos, Configuration cnf, char *path) {
 		pclose(pipe);
 	}
 
-	free(tmp);
 	free(cmd);
 	return ret;
 }
 
+/* code blockssss */
+Position handle_code_block (Position cur_pos, Configuration cnf, CharInfo chri, FILE *text, int len) {
+	int c,
+	    i;
+	FILE *tmp_code,
+	     *pipe;
+	char *cmd;
+	
+	rewind(text);
+	if (strcmp(cnf.code_handler, "prez") == 0) {
+		cnf.padding = cnf.padding * 3;
+		chri.cursive = true;
+		for (i = 0; i < len; i++) {
+			if ((c = fgetc(text)) == '\n') {
+				cur_pos.y ++;
+				cur_pos.x = cnf.padding;
+			} else {
+				if (c == '\t') {
+					cur_pos.x += cnf.code_tabsz;
+				}
+				cur_pos = write_ch(cur_pos, cnf, chri, c);
+			}
+		}
+	} else {
+		tmp_code = fopen(cnf.code_tmp_fname, "w");
+		for (i = 0; i < len; i++) {
+			fputc(fgetc(text), tmp_code);
+		}
+		fclose(tmp_code);
+		
+		cmd = malloc(sizeof(char) * (strlen(cnf.code_handler) + strlen(cnf.code_tmp_fname) + 2));
+		sprintf(cmd, "%s %s", cnf.code_handler, cnf.code_tmp_fname);
+
+		pipe = popen(cmd, "r");
+
+		while (true) {
+			c = fgetc(pipe);
+			if (c == EOF) break;
+			/* end at EOF */
+
+			fputc(c, stdout);
+			/* else, print ch */
+			cur_pos.y = (c == '\n') ? cur_pos.y + 1 : cur_pos.y;
+			if (c == '\n') goto_xy(cur_pos.x, cur_pos.y);
+			/* add padding on newline */
+		}
+
+		pclose(pipe);
+	}
+
+
+	return cur_pos;
+}
+
 int main (int argc, char *argv[]) {
 	FILE *in_real,
-	     *in = tmpfile();
+	     *in = tmpfile(),
+	     *code_tmpf;
 
 	char *cfg = NULL,
 	     *text,
@@ -455,6 +528,21 @@ int main (int argc, char *argv[]) {
 				case 'C':
 					chr.cursive = false;
 					printf("\033[23m");
+					break;
+				case '|':
+					code_tmpf = tmpfile();
+					i ++;
+					j = 0;
+					while ((text[i] != '~') && (text[i + 1] != '|')) {
+						fputc(text[i], code_tmpf);
+						i ++;
+						j ++;
+					}
+
+					i ++;
+					pos = handle_code_block(pos, conf, chr, code_tmpf, j);
+
+					fclose(code_tmpf);
 					break;
 				case '-':
 					_run = true;

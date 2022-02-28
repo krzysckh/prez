@@ -27,6 +27,7 @@ h		header		~hThis is a header!~H
 b		bold 		~bthis text is bold!~B
 c		cursive		~cthis text is cursive~C
 i		image		~i/path/to/image.png~I
+|[\n]		code		~|this text is code~|
 -		next slide	~-
 
 
@@ -45,12 +46,18 @@ option		values		description
 ------------------------------------------------------------
 padding		int 		set padding for text
 		(in chars)
+header_height	int		set height of a header
+		(in chars)	(read HANDLERS section)
+code_tabsz	int		set \t size for default 
+		(in chars)      code block handler
 image_handler	/path/to/prg	set image handler
 				(read HANDLERS section)
 header_handler	prez | 		set a title handler
 		/path/to/prg	(read HANDLERS section)
-header_height	int		set height of a header
-		(in chars)	(read HANDLERS section)
+code_handler	prez |		set a code handler
+		/path/to/prg	(read HANDLERS section)
+code_tmp_fname	/tmp/name	set a name for temporary
+				code block files
 
 
 HANDLERS
@@ -76,6 +83,14 @@ Handlers can be set in the configuration file.
 
   Recommended: figlet[4], toilet[5], banner[6]
 
+- code_handler sets a program to run when rendering code blocks.
+  It runs program with code_tmp_fname at the end.
+  Defaults to "prez". If set as such, it will render code
+  with padding set to 3*padding. Also it will use code_tabsz
+  to set tab size (defaults to 8).
+
+  Recommended: highlight[7], [8]
+
 
 EXAMPLES
 ========
@@ -87,7 +102,7 @@ EXAMPLES
 	padding	5
 	image_handler	imcat
 	header_handler	figlet -f speed
-
+	code_handler
 
 example.prez 
 
@@ -105,6 +120,19 @@ example.prez
 	~p~bSources~B~P
 
 	~p* https://wikipedia.org~P
+
+BUGS
+====
+
+=> ~| (code tag) may not work correctly when used without newline
+   after it.
+
+   incorrect: 
+	~| /* this is a code block */ ~|
+   correct:
+	~|
+	/* this is a code block */
+	~|
 
 
 REFERENCES
@@ -125,3 +153,7 @@ REFERENCES
       a large ASCII art version of the text that is supplied to
       it as its program arguments.
       https://en.wikipedia.org/wiki/Banner_(Unix)
+[7] - Highlight converts sourcecode to HTML, [...] and terminal escape 
+      sequences with coloured syntax highlighting. 
+      http://www.andre-simon.de/doku/highlight/en/highlight.php
+[8] - Recommended setting: highlight -O ansi --stdout --syntax <language>
