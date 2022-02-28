@@ -18,8 +18,6 @@ typedef struct {
 	bool bold;
 	bool cursive;
 	bool header;
-	bool link;
-	bool image;
 } CharInfo;
 
 typedef struct {
@@ -57,7 +55,7 @@ Configuration read_conf(FILE *conf_f) {
 	    i = 0,
 	    sz,
 	    lines = 0,
-	    curr_line_n = 0,
+	    curr_line_n,
 	    line_len;
 
 	ret.padding = 5;
@@ -402,7 +400,7 @@ int main (int argc, char *argv[]) {
 	     _found_sld;
 
 
-	CharInfo chr = {false, false, false, false, false, false};
+	CharInfo chr = {false, false, false, false};
 
 	Position pos = {0, 0};
 
