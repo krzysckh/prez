@@ -27,7 +27,7 @@ h		header		~hThis is a header!~H
 b		bold 		~bthis text is bold!~B
 c		cursive		~cthis text is cursive~C
 i		image		~i/path/to/image.png~I
-|[\n]		code		~|this text is code~|
+|[\n]		code		~|\nthis text is code~|
 -		next slide	~-
 
 
@@ -50,8 +50,8 @@ header_height	int		set height of a header
 		(in chars)	(read HANDLERS section)
 code_tabsz	int		set \t size for default 
 		(in chars)      code block handler
-image_handler	/path/to/prg	set image handler
-				(read HANDLERS section)
+image_handler	prez | 		set image handler
+		/path/to/prg	(read HANDLERS section)
 header_handler	prez | 		set a title handler
 		/path/to/prg	(read HANDLERS section)
 code_handler	prez |		set a code handler
