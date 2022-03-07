@@ -61,7 +61,7 @@ Configuration read_conf(FILE *conf_f) {
 	ret.padding = 5;
 	ret.header_height = 8;
 	ret.code_tabsz = 8;
-	ret.image_handler = NULL;
+	ret.image_handler = "prez";
 	ret.header_handler = "prez";
 	ret.code_handler = "prez";
 	ret.code_tmp_fname = "/tmp/_prez_code";
